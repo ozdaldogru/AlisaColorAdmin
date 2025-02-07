@@ -1,12 +1,10 @@
 import Order from "@/lib/models/Order";
 import Product from "@/lib/models/Product";
 import { connectToDB } from "@/lib/mongoDB";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from '@clerk/nextjs/server';
 
-export const GET = async (
-  req: NextRequest,
-  { params }: { params: { customerId: string } }
-) => {
+export const GET = async (req: NextRequest, props: { params: Promise<{ customerId: string }> }) => {
+  const params = await props.params;
   try {
     await connectToDB();
 

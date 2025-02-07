@@ -1,13 +1,12 @@
 "use client"
 
-import { useEffect, useState, use } from "react";
-import Loader from "@/components/custom ui/Loader"
-import ProductForm from "@/components/products/ProductForm"
+import Loader from '@/components/custom ui/Loader'
+import ProductForm from '@/components/products/ProductForm'
+import React, { useEffect, useState } from 'react'
 
-const ProductDetails = (props: { params: Promise<{ productId: string }>}) => {
-  const params = use(props.params);
+const ProductDetails = ({ params }: { params: { productId: string }}) => {
   const [loading, setLoading] = useState(true)
-  const [ProductDetails, setProductDetails] = useState<ProductType | null>(null)
+  const [productDetails, setProductDetails] = useState<ProductType | null>(null)
 
   const getProductDetails = async () => {
     try { 
@@ -24,11 +23,11 @@ const ProductDetails = (props: { params: Promise<{ productId: string }>}) => {
 
   useEffect(() => {
     getProductDetails()
-  })
+  }, [])
 
   return loading ? <Loader /> : (
-    <ProductForm initialData={ProductDetails}/>
+    <ProductForm initialData={productDetails} />
   )
 }
 
-export default ProductDetails;
+export default ProductDetails

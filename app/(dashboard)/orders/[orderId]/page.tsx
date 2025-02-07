@@ -4,7 +4,8 @@ import { columns } from "@/components/orderItems/OrderItemsColumns";
 
 type Params = { orderId: string }
 
-const OrderDetails = async ({ params }: { params: Params }) => {
+const OrderDetails = async (props: { params: Promise<Params> }) => {
+  const params = await props.params;
   const orderId = params.orderId;
   const res = await fetch(`${process.env.ADMIN_DASHBOARD_URL}/api/orders/${orderId}`);
   const { orderDetails, customer } = await res.json();

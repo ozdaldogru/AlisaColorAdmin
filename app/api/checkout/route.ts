@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from '@clerk/nextjs/server';
 import { stripe } from "@/lib/stripe";
 
 const corsHeaders = {

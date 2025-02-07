@@ -1,54 +1,85 @@
-import { connectToDB } from "@/lib/mongoDB";
-import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+
+import { connectToDB } from "@/lib/mongoDB";
 import Product from "@/lib/models/Product";
+import Collection from "@/lib/models/Collection";
 
 export const POST = async (req: NextRequest) => {
   try {
-    const { userId } = await auth()
+    const  userId  = auth();
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 403 })
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    await connectToDB()
+    await connectToDB();
 
-    const { title, status, description, media, collections, price, expense } = await req.json()
+    const {
+      title,
+      description,
+      media,
+      category,
+      collections,
+      tags,
+      sizes,
+      colors,
+      price,
+      expense,
+    } = await req.json();
 
-    const existingProduct = await Product.findOne({ title })
-
-    if (existingProduct) {
-      return new NextResponse("Product is already exists", { status: 400 })
-    }
-
-    if (!title || !status || !description || !media || !collections || !price || !expense) {
-      return new NextResponse("Please fill up all fields", { status: 400 })
+    if (!title || !description || !media || !category || !price || !expense) {
+      return new NextResponse("Not enough data to create a product", {
+        status: 400,
+      });
     }
 
     const newProduct = await Product.create({
-      title, status, description, media, collections, price, expense 
-    })
+      title,
+      description,
+      media,
+      category,
+      collections,
+      tags,
+      sizes,
+      colors,
+      price,
+      expense,
+    });
 
-    await newProduct.save()
+    await newProduct.save();
 
-    return NextResponse.json(newProduct, { status: 200 })
+    if (collections) {
+      for (const collectionId of collections) {
+        const collection = await Collection.findById(collectionId);
+        if (collection) {
+          collection.products.push(newProduct._id);
+          await collection.save();
+        }
+      }
+    }
+
+    return NextResponse.json(newProduct, { status: 200 });
   } catch (err) {
-    console.log("[products_POST]", err)
-    return new NextResponse("Internal Server Error", { status: 500 })
+    console.log("[products_POST]", err);
+    return new NextResponse("Internal Error", { status: 500 });
   }
-}
+};
 
 export const GET = async (req: NextRequest) => {
   try {
-    await connectToDB()
+    await connectToDB();
 
-    const products = await Product.find().sort({ createdAt: "desc" })
+    const products = await Product.find()
+      .sort({ createdAt: "desc" })
+      .populate({ path: "collections", model: Collection });
 
-    return NextResponse.json(products, { status: 200 })
+    return NextResponse.json(products, { status: 200 });
   } catch (err) {
-    console.log("[products_GET]", err)
-    return new NextResponse("Internal Server Error", { status: 500 })
+    console.log("[products_GET]", err);
+    return new NextResponse("Internal Error", { status: 500 });
   }
-}
+};
 
 export const dynamic = "force-dynamic";
+

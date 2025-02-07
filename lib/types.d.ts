@@ -1,10 +1,16 @@
+type CollectionType = {
+  _id: string;
+  title: string;
+  products: ProductType[];
+}
+
 type ProductType = {
   _id: string;
-  title: string,
-  status: string;
+  title: string;
   description: string;
   media: [string];
-  collections: string;
+  status: string;
+  collections: [CollectionType];
   price: number;
   expense: number;
   createdAt: Date;
