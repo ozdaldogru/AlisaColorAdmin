@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, use } from "react";
 
 import Loader from "@/components/custom ui/Loader"
 import CollectionForm from "@/components/collections/CollectionForm"
 
-const CollectionDetails = ({ params }: { params: { collectionId: string }}) => {
+const CollectionDetails = (props: { params: Promise<{ collectionId: string }>}) => {
+  const params = use(props.params);
   const [loading, setLoading] = useState(true)
   const [collectionDetails, setCollectionDetails] = useState<CollectionType | null>(null)
 
@@ -24,7 +25,7 @@ const CollectionDetails = ({ params }: { params: { collectionId: string }}) => {
 
   useEffect(() => {
     getCollectionDetails()
-  }, [])
+  }, )
 
   return loading ? <Loader /> : (
     <CollectionForm initialData={collectionDetails}/>

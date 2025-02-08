@@ -10,17 +10,18 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "../ui/textarea";
 import ImageUpload from "../custom ui/ImageUpload";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import MultiSelect from "../custom ui/MultiSelect";
 import toast from "react-hot-toast";
 import Delete from "../custom ui/Delete";
 import Loader from "../custom ui/Loader";
 
 const formSchema = z.object({
-  title: z.string(),
-  status: z.string(),
-  description: z.string().min(2).trim(),
+  title: z.string().min(2).max(2000),
+  description: z.string().min(2).max(50000).trim(),
   media: z.array(z.string()),
-  collections: z.string(),
+  status: z.string(),
+  collections: z.array(z.string()),
   price: z.coerce.number().min(0.1),
   expense: z.coerce.number().min(0.1),
 });
@@ -31,25 +32,34 @@ interface ProductFormProps {
 
 const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
   const router = useRouter();
+
   const [loading, setLoading] = useState(true);
+  const [collections, setCollections] = useState<CollectionType[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData
-      ? { ...initialData }
+    ? {
+      ...initialData,
+      collections: initialData.collections.map(
+        (collection) => collection._id
+      ),
+    }
       : {
           title: "",
-          status: "",
           description: "",
           media: [],
-          collections: "",
+          status: "",
+          collections: [],
           price: 0.1,
           expense: 0.1,
         },
   });
 
   const handleKeyPress = (
-    e: React.KeyboardEvent<HTMLInputElement> | React.KeyboardEvent<HTMLTextAreaElement>
+    e:
+      | React.KeyboardEvent<HTMLInputElement>
+      | React.KeyboardEvent<HTMLTextAreaElement>
   ) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -59,7 +69,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setLoading(true);
-      const url = initialData ? `/api/products/${initialData._id}` : "/api/products";
+      const url = initialData
+        ? `/api/products/${initialData._id}`
+        : "/api/products";
       const res = await fetch(url, {
         method: "POST",
         body: JSON.stringify(values),
@@ -76,6 +88,25 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
     }
   };
 
+  const getCollections = async () => {
+    try {
+      const res = await fetch("/api/collections", {
+        method: "GET",
+      });
+      const data = await res.json();
+      setCollections(data);
+      setLoading(false);
+    } catch (err) {
+      console.log("[collections_GET]", err);
+      toast.error("Something went wrong! Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    getCollections();
+  },);
+
+  
   return loading ? (
     <Loader />
   ) : (
@@ -109,7 +140,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
             )}
           />
 
-        <FormField
+<FormField
               control={form.control}
               name="status"
               render={({ field }) => (
@@ -130,7 +161,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
               )}
             />
 
-            <FormField
+<FormField
               control={form.control}
               name="price"
               render={({ field }) => (
@@ -166,7 +197,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
                 </FormItem>
               )}
             />
-
+ 
+ {collections.length > 0 && (
               <FormField
                 control={form.control}
                 name="collections"
@@ -174,23 +206,28 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
                   <FormItem>
                     <FormLabel>Collections</FormLabel>
                     <FormControl>
-                    <select  
-                  className=" border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-                       {...field}>
-                          <option className="overflow-visible bg-white">Select A Status</option>                        
-                          <option className="overflow-visible bg-white">Crochets</option>
-                          <option className="overflow-visible bg-white">Drawings</option>
-                          <option className="overflow-visible bg-white">Jewelries</option>
-                          <option className="overflow-visible bg-white">Paintings</option>
-                          <option className="overflow-visible bg-white">Tattoos</option>
-                          <option className="overflow-visible bg-white">Wearables</option>
-                          <option className="overflow-visible bg-white">Wood Burnings</option>
-                      </select> 
+                      <MultiSelect
+                        placeholder="Collections"
+                        collections={collections}
+                        value={field.value}
+                        onChange={(_id) =>
+                          field.onChange([...field.value, _id])
+                        }
+                        onRemove={(idToRemove) =>
+                          field.onChange([
+                            ...field.value.filter(
+                              (collectionId) => collectionId !== idToRemove
+                            ),
+                          ])
+                        }
+                      />
                     </FormControl>
-                    <FormMessage className="text-red-1 overflow-visible bg-blue" />
+                    <FormMessage className="text-red-1" />
                   </FormItem>
                 )}
               />
+            )}
+
           <FormField
             control={form.control}
             name="description"
@@ -230,7 +267,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
               </FormItem>
             )}
           />
-
 
           <div className="flex gap-10">
             <Button type="submit" className="bg-blue-1 text-white">

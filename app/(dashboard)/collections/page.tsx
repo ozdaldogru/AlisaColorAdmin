@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
-
 import { columns } from "@/components/collections/CollectionColumns";
 import { DataTable } from "@/components/custom ui/DataTable";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,7 @@ const Collections = () => {
 
   useEffect(() => {
     getCollections();
-  }, []);
+  },);
 
   return loading ? <Loader /> : (
     <div className="px-10 py-5">

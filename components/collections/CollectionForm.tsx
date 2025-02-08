@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-
 import { Separator } from "../ui/separator";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,16 +15,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "../ui/textarea";
-import ImageUpload from "../custom ui/ImageUpload";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import Delete from "../custom ui/Delete";
 
 const formSchema = z.object({
   title: z.string().min(2).max(20),
-  description: z.string().min(2).max(500).trim(),
-  image: z.string(),
 });
 
 interface CollectionFormProps {
@@ -43,8 +38,6 @@ const CollectionForm: React.FC<CollectionFormProps> = ({ initialData }) => {
       ? initialData
       : {
           title: "",
-          description: "",
-          image: "",
         },
   });
 
@@ -97,36 +90,6 @@ const CollectionForm: React.FC<CollectionFormProps> = ({ initialData }) => {
                 <FormLabel>Title</FormLabel>
                 <FormControl>
                   <Input placeholder="Title" {...field} onKeyDown={handleKeyPress} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea placeholder="Description" {...field} rows={5} onKeyDown={handleKeyPress} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="image"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Image</FormLabel>
-                <FormControl>
-                  <ImageUpload
-                    value={field.value ? [field.value] : []}
-                    onChange={(url) => field.onChange(url)}
-                    onRemove={() => field.onChange("")}
-                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

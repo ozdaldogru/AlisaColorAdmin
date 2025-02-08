@@ -2,9 +2,10 @@
 
 import Loader from '@/components/custom ui/Loader'
 import ProductForm from '@/components/products/ProductForm'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, use } from 'react';
 
-const ProductDetails = ({ params }: { params: { productId: string }}) => {
+const ProductDetails = (props: { params: Promise<{ productId: string }>}) => {
+  const params = use(props.params);
   const [loading, setLoading] = useState(true)
   const [productDetails, setProductDetails] = useState<ProductType | null>(null)
 
@@ -23,7 +24,7 @@ const ProductDetails = ({ params }: { params: { productId: string }}) => {
 
   useEffect(() => {
     getProductDetails()
-  }, [])
+  }, )
 
   return loading ? <Loader /> : (
     <ProductForm initialData={productDetails} />

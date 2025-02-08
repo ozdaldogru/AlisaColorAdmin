@@ -4,10 +4,8 @@ import { connectToDB } from "@/lib/mongoDB";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-export const GET = async (
-  req: NextRequest,
-  { params }: { params: { productId: string } }
-) => {
+export const GET = async (req: NextRequest, props: { params: Promise<{ productId: string }> }) => {
+  const params = await props.params;
   try {
     await connectToDB();
 
@@ -36,10 +34,8 @@ export const GET = async (
   }
 };
 
-export const POST = async (
-  req: NextRequest,
-  { params }: { params: { productId: string } }
-) => {
+export const POST = async (req: NextRequest, props: { params: Promise<{ productId: string }> }) => {
+  const params = await props.params;
   try {
     const userId = auth();
 
@@ -131,10 +127,8 @@ export const POST = async (
   }
 };
 
-export const DELETE = async (
-  req: NextRequest,
-  { params }: { params: { productId: string } }
-) => {
+export const DELETE = async (req: NextRequest, props: { params: Promise<{ productId: string }> }) => {
+  const params = await props.params;
   try {
     const userId = auth();
 

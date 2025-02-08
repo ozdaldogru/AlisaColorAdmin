@@ -5,10 +5,8 @@ import { connectToDB } from "@/lib/mongoDB";
 import Collection from "@/lib/models/Collection";
 import Product from "@/lib/models/Product";
 
-export const GET = async (
-  req: NextRequest,
-  { params }: { params: { collectionId: string } }
-) => {
+export const GET = async (req: NextRequest, props: { params: Promise<{ collectionId: string }> }) => {
+  const params = await props.params;
   try {
     await connectToDB();
 
@@ -28,10 +26,8 @@ export const GET = async (
   }
 };
 
-export const POST = async (
-  req: NextRequest,
-  { params }: { params: { collectionId: string } }
-) => {
+export const POST = async (req: NextRequest, props: { params: Promise<{ collectionId: string }> }) => {
+  const params = await props.params;
   try {
     const userId  = auth();
 
@@ -47,15 +43,15 @@ export const POST = async (
       return new NextResponse("Collection not found", { status: 404 });
     }
 
-    const { title, description, image } = await req.json();
+    const { title } = await req.json();
 
-    if (!title || !image) {
-      return new NextResponse("Title and image are required", { status: 400 });
+    if (!title ) {
+      return new NextResponse("Title is required", { status: 400 });
     }
 
     collection = await Collection.findByIdAndUpdate(
       params.collectionId,
-      { title, description, image },
+      { title },
       { new: true }
     );
 
@@ -68,10 +64,8 @@ export const POST = async (
   }
 };
 
-export const DELETE = async (
-  req: NextRequest,
-  { params }: { params: { collectionId: string } }
-) => {
+export const DELETE = async (req: NextRequest, props: { params: Promise<{ collectionId: string }> }) => {
+  const params = await props.params;
   try {
     const userId = auth();
 

@@ -32,7 +32,7 @@ const Products = () => {
 
   useEffect(() => {
     getProducts();
-  }, []);
+  },);
 
   return loading ? (
     <Loader />
