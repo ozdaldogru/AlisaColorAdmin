@@ -5,7 +5,7 @@ const ProductSchema = new mongoose.Schema({
   status: String,
   description: String,
   media: [String],
-  collections: [{ type: mongoose.Schema.Types.ObjectId, ref: "Collection" }],
+  collections: String,
   price: { type: mongoose.Schema.Types.Decimal128, get: (v: mongoose.Schema.Types.Decimal128) => { return parseFloat(v.toString()) }},
   expense: { type: mongoose.Schema.Types.Decimal128, get: (v: mongoose.Schema.Types.Decimal128) => { return parseFloat(v.toString()) }},
   createdAt: { type: Date, default: Date.now },

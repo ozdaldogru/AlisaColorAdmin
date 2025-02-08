@@ -1,16 +1,10 @@
-type CollectionType = {
-  _id: string;
-  title: string;
-  products: ProductType[];
-}
-
 type ProductType = {
   _id: string;
   title: string;
   description: string;
   media: [string];
   status: string;
-  collections: [CollectionType];
+  collections: string;
   price: number;
   expense: number;
   createdAt: Date;

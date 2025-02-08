@@ -1,18 +1,16 @@
-import Collection from "@/lib/models/Collection";
-import Product from "@/lib/models/Product";
-import { connectToDB } from "@/lib/mongoDB";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+
+import { connectToDB } from "@/lib/mongoDB";
+import Product from "@/lib/models/Product";
+
 
 export const GET = async (req: NextRequest, props: { params: Promise<{ productId: string }> }) => {
   const params = await props.params;
   try {
     await connectToDB();
 
-    const product = await Product.findById(params.productId).populate({
-      path: "collections",
-      model: Collection,
-    });
+    const product = await Product.findById(params.productId).populate({ path: "products", model: Product });
 
     if (!product) {
       return new NextResponse(
@@ -20,14 +18,8 @@ export const GET = async (req: NextRequest, props: { params: Promise<{ productId
         { status: 404 }
       );
     }
-    return new NextResponse(JSON.stringify(product), {
-      status: 200,
-      headers: {
-        "Access-Control-Allow-Origin": `${process.env.ECOMMERCE_STORE_URL}`,
-        "Access-Control-Allow-Methods": "GET",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    });
+
+    return NextResponse.json(product, { status: 200 });
   } catch (err) {
     console.log("[productId_GET]", err);
     return new NextResponse("Internal error", { status: 500 });
@@ -37,7 +29,7 @@ export const GET = async (req: NextRequest, props: { params: Promise<{ productId
 export const POST = async (req: NextRequest, props: { params: Promise<{ productId: string }> }) => {
   const params = await props.params;
   try {
-    const userId = auth();
+    const userId  = auth();
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -45,82 +37,27 @@ export const POST = async (req: NextRequest, props: { params: Promise<{ productI
 
     await connectToDB();
 
-    const product = await Product.findById(params.productId);
+    let product = await Product.findById(params.productId);
 
     if (!product) {
-      return new NextResponse(
-        JSON.stringify({ message: "Product not found" }),
-        { status: 404 }
-      );
+      return new NextResponse("Product not found", { status: 404 });
     }
 
-    const {
-      title,
-      description,
-      media,
-      category,
-      collections,
-      tags,
-      sizes,
-      colors,
-      price,
-      expense,
-    } = await req.json();
+    const { title, status, description, collection, media, price, expense} = await req.json();
 
-    if (!title || !description || !media || !category || !price || !expense) {
-      return new NextResponse("Not enough data to create a new product", {
-        status: 400,
-      });
+    if (!title || !status || !description || !collection || !price || !expense) {
+      return new NextResponse("Please Fill Up All Fields", { status: 400 });
     }
 
-    const addedCollections = collections.filter(
-      (collectionId: string) => !product.collections.includes(collectionId)
-    );
-    // included in new data, but not included in the previous data
-
-    const removedCollections = product.collections.filter(
-      (collectionId: string) => !collections.includes(collectionId)
-    );
-    // included in previous data, but not included in the new data
-
-    // Update collections
-    await Promise.all([
-      // Update added collections with this product
-      ...addedCollections.map((collectionId: string) =>
-        Collection.findByIdAndUpdate(collectionId, {
-          $push: { products: product._id },
-        })
-      ),
-
-      // Update removed collections without this product
-      ...removedCollections.map((collectionId: string) =>
-        Collection.findByIdAndUpdate(collectionId, {
-          $pull: { products: product._id },
-        })
-      ),
-    ]);
-
-    // Update product
-    const updatedProduct = await Product.findByIdAndUpdate(
-      product._id,
-      {
-        title,
-        description,
-        media,
-        category,
-        collections,
-        tags,
-        sizes,
-        colors,
-        price,
-        expense,
-      },
+    product = await Product.findByIdAndUpdate(
+      params.productId,
+      { title, status, description, collection, media, price, expense },
       { new: true }
-    ).populate({ path: "collections", model: Collection });
+    );
 
-    await updatedProduct.save();
+    await product.save();
 
-    return NextResponse.json(updatedProduct, { status: 200 });
+    return NextResponse.json(product, { status: 200 });
   } catch (err) {
     console.log("[productId_POST]", err);
     return new NextResponse("Internal error", { status: 500 });
@@ -138,29 +75,14 @@ export const DELETE = async (req: NextRequest, props: { params: Promise<{ produc
 
     await connectToDB();
 
-    const product = await Product.findById(params.productId);
+    await Product.findByIdAndDelete(params.productId);
 
-    if (!product) {
-      return new NextResponse(
-        JSON.stringify({ message: "Product not found" }),
-        { status: 404 }
-      );
-    }
-
-    await Product.findByIdAndDelete(product._id);
-
-    // Update collections
-    await Promise.all(
-      product.collections.map((collectionId: string) =>
-        Collection.findByIdAndUpdate(collectionId, {
-          $pull: { products: product._id },
-        })
-      )
+    await Product.updateMany(
+      { products: params.productId },
+      { $pull: { products: params.productId } }
     );
-
-    return new NextResponse(JSON.stringify({ message: "Product deleted" }), {
-      status: 200,
-    });
+    
+    return new NextResponse("Product is deleted", { status: 200 });
   } catch (err) {
     console.log("[productId_DELETE]", err);
     return new NextResponse("Internal error", { status: 500 });
@@ -168,4 +90,3 @@ export const DELETE = async (req: NextRequest, props: { params: Promise<{ produc
 };
 
 export const dynamic = "force-dynamic";
-

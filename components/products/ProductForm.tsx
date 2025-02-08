@@ -6,61 +6,53 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { Separator } from "../ui/separator";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "../ui/textarea";
-import ImageUpload from "../custom ui/ImageUpload";
-import { useEffect, useState } from "react";
-import MultiSelect from "../custom ui/MultiSelect";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import Delete from "../custom ui/Delete";
-import Loader from "../custom ui/Loader";
+import ImageUpload from "@/components/custom ui/ImageUpload";
+import dynamic from 'next/dynamic';
+
+const JoditEditor = dynamic(
+  () => import('jodit-react'),
+  { ssr: false }
+);
 
 const formSchema = z.object({
-  title: z.string().min(2).max(2000),
-  description: z.string().min(2).max(50000).trim(),
-  media: z.array(z.string()),
-  status: z.string(),
-  collections: z.array(z.string()),
-  price: z.coerce.number().min(0.1),
-  expense: z.coerce.number().min(0.1),
+  title: z.string().nonempty("Title is required"),
+  status: z.string().nonempty("Status is required"),
+  description: z.string().min(10, "Description must be at least 10 characters").trim(),
+  collections: z.string().nonempty("Collection is required"),
+  media: z.array(z.string()).nonempty("At least one image is required"),
+  price: z.coerce.number().positive("Price must be a positive number"),
+  expense: z.coerce.number().positive("Expense must be a positive number"),
 });
 
 interface ProductFormProps {
-  initialData?: ProductType | null; //Must have "?" to make it optional
+  initialData?: ProductType | null; // Must have "?" to make it optional
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
   const router = useRouter();
-
-  const [loading, setLoading] = useState(true);
-  const [collections, setCollections] = useState<CollectionType[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData
-    ? {
-      ...initialData,
-      collections: initialData.collections.map(
-        (collection) => collection._id
-      ),
-    }
+      ? initialData
       : {
           title: "",
-          description: "",
-          media: [],
           status: "",
-          collections: [],
+          description: "",
+          collections: "",
+          media: [],
           price: 0.1,
           expense: 0.1,
         },
   });
 
-  const handleKeyPress = (
-    e:
-      | React.KeyboardEvent<HTMLInputElement>
-      | React.KeyboardEvent<HTMLTextAreaElement>
-  ) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement> | React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
     }
@@ -69,47 +61,40 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setLoading(true);
-      const url = initialData
-        ? `/api/products/${initialData._id}`
-        : "/api/products";
+      const url = initialData ? `/api/products/${initialData._id}` : "/api/products";
+      
+      // Log the request data
+      console.log("Submitting values:", values);
+      
       const res = await fetch(url, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(values),
       });
+      
+      // Log the response status and data
+      console.log("Response status:", res.status);
+      const responseData = await res.json();
+      console.log("Response data:", responseData);
+      
       if (res.ok) {
         setLoading(false);
         toast.success(`Product ${initialData ? "updated" : "created"}`);
-        window.location.href = "/products";
         router.push("/products");
+      } else {
+        toast.error(responseData.message || "Something went wrong! Please try again.");
+        setLoading(false);
       }
     } catch (err) {
       console.log("[products_POST]", err);
       toast.error("Something went wrong! Please try again.");
-    }
-  };
-
-  const getCollections = async () => {
-    try {
-      const res = await fetch("/api/collections", {
-        method: "GET",
-      });
-      const data = await res.json();
-      setCollections(data);
       setLoading(false);
-    } catch (err) {
-      console.log("[collections_GET]", err);
-      toast.error("Something went wrong! Please try again.");
     }
   };
 
-  useEffect(() => {
-    getCollections();
-  },);
-
-  
-  return loading ? (
-    <Loader />
-  ) : (
+  return (
     <div className="p-10">
       {initialData ? (
         <div className="flex items-center justify-between">
@@ -129,126 +114,107 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
               <FormItem>
                 <FormLabel>Title</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Title"
-                    {...field}
-                    onKeyDown={handleKeyPress}
-                  />
+                  <Input placeholder="Title" {...field} onKeyDown={handleKeyPress} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="status"
+            aria-label="Select A Status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <FormControl>
+                  <select className="border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" {...field}>
+                    <option className="overflow-visible bg-white">Select A Status</option>
+                    <option className="overflow-visible bg-white">Archived</option>
+                    <option className="overflow-visible bg-white">On Sale</option>
+                    <option className="overflow-visible bg-white">Pending</option>
+                    <option className="overflow-visible bg-white">Sold Out</option>
+                  </select>
                 </FormControl>
                 <FormMessage className="text-red-1" />
               </FormItem>
             )}
           />
 
-<FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <FormControl>
-                  <select  
-                  className=" border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-                       {...field}>
-                          <option className="overflow-visible bg-white">Select A Status</option>                        
-                          <option className="overflow-visible bg-white">On Sale</option>
-                          <option className="overflow-visible bg-white">Sold Out</option>
-                          <option className="overflow-visible bg-white">Pending</option>
-                      </select>  
-                  </FormControl>
-                  <FormMessage className="text-red-1" />
-                </FormItem>
-              )}
-            />
-
-<FormField
-              control={form.control}
-              name="price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Price ($)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="Price"
-                      {...field}
-                      onKeyDown={handleKeyPress}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-1" />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="expense"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Expense ($)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="Expense"
-                      {...field}
-                      onKeyDown={handleKeyPress}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-1" />
-                </FormItem>
-              )}
-            />
- 
- {collections.length > 0 && (
-              <FormField
-                control={form.control}
-                name="collections"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Collections</FormLabel>
-                    <FormControl>
-                      <MultiSelect
-                        placeholder="Collections"
-                        collections={collections}
-                        value={field.value}
-                        onChange={(_id) =>
-                          field.onChange([...field.value, _id])
-                        }
-                        onRemove={(idToRemove) =>
-                          field.onChange([
-                            ...field.value.filter(
-                              (collectionId) => collectionId !== idToRemove
-                            ),
-                          ])
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage className="text-red-1" />
-                  </FormItem>
-                )}
-              />
+          <FormField
+            control={form.control}
+            name="collections"
+            aria-label="Select A Collection"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Collection</FormLabel>
+                <FormControl>
+                  <select className="border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" {...field}>
+                    <option className="overflow-visible bg-white">Select A Collection</option>
+                    <option className="overflow-visible bg-white">Crochets</option>
+                    <option className="overflow-visible bg-white">Drawings</option>
+                    <option className="overflow-visible bg-white">Jewelries</option>
+                    <option className="overflow-visible bg-white">Painting</option>
+                    <option className="overflow-visible bg-white">Tattoos</option>
+                    <option className="overflow-visible bg-white">Wearables</option>
+                    <option className="overflow-visible bg-white">Wood Burnings</option>
+                  </select>
+                </FormControl>
+                <FormMessage className="text-red-1" />
+              </FormItem>
             )}
+          />
+
+          <FormField
+            control={form.control}
+            name="price"
+            aria-label="Enter Price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Price ($)</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="Price" {...field} onKeyDown={handleKeyPress} />
+                </FormControl>
+                <FormMessage className="text-red-1" />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="expense"
+            aria-label="Enter Expense"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Expense ($)</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="Expense" {...field} onKeyDown={handleKeyPress} />
+                </FormControl>
+                <FormMessage className="text-red-1" />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}
             name="description"
+            aria-label="enter detailed description"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Textarea
-                    placeholder="Description"
-                    {...field}
-                    rows={5}
-                    onKeyDown={handleKeyPress}
-                  />
+                  <JoditEditor {...field} />
                 </FormControl>
                 <FormMessage className="text-red-1" />
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
             name="media"
+            aria-label="select images"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Image</FormLabel>
@@ -257,9 +223,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
                     value={field.value}
                     onChange={(url) => field.onChange([...field.value, url])}
                     onRemove={(url) =>
-                      field.onChange([
-                        ...field.value.filter((image) => image !== url),
-                      ])
+                      field.onChange([...field.value.filter((image) => image !== url)])
                     }
                   />
                 </FormControl>
@@ -269,8 +233,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
           />
 
           <div className="flex gap-10">
-            <Button type="submit" className="bg-blue-1 text-white">
-              Submit
+            <Button type="submit" className="bg-blue-1 text-white" disabled={loading}>
+              {loading ? "Submitting..." : "Submit"}
             </Button>
             <Button
               type="button"

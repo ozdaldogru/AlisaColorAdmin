@@ -13,11 +13,6 @@ export const navLinks = [
     label: "Dashboard",
   },
   {
-    url: "/collections",
-    icon: <Shapes />,
-    label: "Collections",
-  },
-  {
     url: "/products",
     icon: <Tag />,
     label: "Products",
