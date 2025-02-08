@@ -22,6 +22,10 @@ export const columns: ColumnDef<ProductType>[] = [
     header: "Status",
   },
   {
+    accessorKey: "collections",
+    header: "Collections",
+  },
+  {
     accessorKey: "price",
     header: "Price ($)",
   },
