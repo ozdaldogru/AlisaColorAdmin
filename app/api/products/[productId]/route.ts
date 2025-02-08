@@ -45,7 +45,7 @@ export const POST = async (req: NextRequest, props: { params: Promise<{ productI
 
     const { title, status, description, collection, media, price, expense} = await req.json();
 
-    if (!title || !status || !description || !collection || !price || !expense) {
+    if (!title || !status || !description || !price || !expense) {
       return new NextResponse("Please Fill Up All Fields", { status: 400 });
     }
 

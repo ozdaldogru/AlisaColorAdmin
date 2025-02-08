@@ -21,7 +21,7 @@ export const POST = async (req: NextRequest) => {
       return new NextResponse("Product already exists", { status: 400 })
     }
 
-    if (!title || !status || !description || !collection || !media || !price || !expense) {
+    if (!title || !status || !description || !media || !price || !expense) {
       return new NextResponse("Please Fill Up All Fields", { status: 400 })
     }
 
