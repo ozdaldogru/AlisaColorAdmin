@@ -10,7 +10,7 @@ export const GET = async (req: NextRequest, props: { params: Promise<{ productId
   try {
     await connectToDB();
 
-    const product = await Product.findById(params.productId).populate({ path: "products", model: Product });
+    const product = await Product.findById(params.productId);
 
     if (!product) {
       return new NextResponse(
