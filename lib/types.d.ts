@@ -4,7 +4,6 @@ type ProductType = {
   description: string;
   media: [string];
   status: string;
-  collections: string;
   price: number;
   expense: number;
   createdAt: Date;
