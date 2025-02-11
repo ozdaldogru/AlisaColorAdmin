@@ -1,9 +1,20 @@
-import { SignIn } from "@clerk/nextjs";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
+import { RedirectToSignIn } from "@clerk/nextjs";
 
 export default function Page() {
   return (
-    <div className="h-screen flex justify-center items-center">
-      <SignIn />
-    </div>
-  );
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/"
+    >
+      <SignedIn>
+    
+      </SignedIn>
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    </ClerkProvider>
+  )
 }

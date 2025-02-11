@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css";
-
 import { ClerkProvider } from "@clerk/nextjs";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { RedirectToSignIn } from "@clerk/nextjs";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Alisa Color - Admin Auth",
-  description: "Admin dashboard to manage Alisa Color's data",
+  title: "Azera Motors admin",
+  description: "Admin dashboard to manage Azera Motors",
+  icons: {
+    icon: '/favicon.ico', // /public path
+  },
 };
 
 export default function RootLayout({
@@ -17,10 +21,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en">
+
+    <ClerkProvider
+    publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+    signInFallbackRedirectUrl="/"
+    signUpFallbackRedirectUrl="/"
+  >
+    <SignedIn>
+  
+    <html lang="en">
         <body className={inter.className}>{children}</body>
       </html>
-    </ClerkProvider>
+
+    </SignedIn>
+    <SignedOut>
+      <RedirectToSignIn />
+    </SignedOut>
+  </ClerkProvider>
+
+
   );
 }
+
