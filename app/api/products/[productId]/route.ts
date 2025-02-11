@@ -43,15 +43,15 @@ export const POST = async (req: NextRequest, props: { params: Promise<{ productI
       return new NextResponse("Product not found", { status: 404 });
     }
 
-    const { title, status, description, collection, media, price, expense} = await req.json();
+    const { title, status, description, collections, media, price, expense} = await req.json();
 
-    if (!title || !status || !description || !price || !expense) {
+    if (!title || !status || !description || !collections || !media || !price || !expense) {
       return new NextResponse("Please Fill Up All Fields", { status: 400 });
     }
 
     product = await Product.findByIdAndUpdate(
       params.productId,
-      { title, status, description, collection, media, price, expense },
+      { title, status, description, collections, media, price, expense },
       { new: true }
     );
 
