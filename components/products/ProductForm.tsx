@@ -232,18 +232,22 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
             )}
           />
 
-          <div className="flex gap-10">
-            <Button type="submit" className="bg-blue-1 text-white" disabled={loading}>
-              {loading ? "Submitting..." : "Submit"}
-            </Button>
-            <Button
-              type="button"
-              onClick={() => router.push("/products")}
-              className="bg-blue-1 text-white"
-            >
-              Discard
-            </Button>
-          </div>
+<div className="flex gap-10">
+         
+         <Button type="submit" 
+           className="bg-[#186a3b] text-white" 
+           aria-label="click submit button">
+           Submit
+         </Button>
+         <Button
+           aria-label="click discard button"
+           type="button"
+           onClick={() => router.push("/products")}
+           className="bg-[#cb4335] text-white"
+         >
+           Discard
+         </Button>
+       </div>
         </form>
       </Form>
     </div>
